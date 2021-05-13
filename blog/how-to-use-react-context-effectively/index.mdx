@@ -1,0 +1,55 @@
+---
+slug: 'how-to-use-react-context-effectively'
+title: 'How to use React Context effectively'
+date: '2021-03-08'
+author: 'Kent C. Dodds'
+description:
+  "_How to create and expose React Context providers and consumers
+  me._"
+categories:
+  - 'react'
+keywords:
+  - 'react'
+  - 'react context'
+  - 'react hooks'
+banner: './images/banner.jpg'
+bannerCredit: 'Photo by [Pathum Danthanarayana](https://unsplash.com/photos/KLbUohEjb04)'
+---
+
+Current Available Translations:
+* [Russian](https://habr.com/ru/post/522896/)
+
+En [Administración del estado de la aplicación con React](https://kentcdodds.com/blog/application-state-management-with-react), hablo de como usando una mezcla del estado local y el Contexto de React puede ayudarte a administrar bien el estado en cualquier aplicacion con React. Muesto algunos ejemplos y quero hacer notar algunas cosas sobre esos ejemplos y como tu puedes crear consumidores de Contextos de React efectivamente, así tu puedes evitar algunos problemas y mejorar la experiencia de desarrollo y la maintenibilidad del contexto de los objetos que creaste para tu aplicación o librerías.
+
+> Nota, por favor lee [Administración del estado de la aplicación con React](https://kentcdodds.com/blog/application-state-management-with-react) y sigue el consejo de que no deberías usar el contexto para resolver todos los problemas de intercambio de estado que pasan a través de tu escritorio. Para cuando tu si necesites user el contexto, con suerte, esta publicación de blog te ayudará a saber cuando hacerlo de manera efectiva. También, recuerda que el contexto no tiene que ser global para toda la aplicación, y que puede ser aplicado para una parte de tu arbol y tu puedes(y probablemente deberias) tener separada la lógica de contextos de tu aplicación.
+
+Primero, vamos a crear un archivo en `src/count-context.js` y ahí vamos a crear un contexto:
+
+```
+// src/count-contex.js
+import * as React from 'react'
+
+const CountContext = React.CreateContext();
+```
+
+Antes que nada, no tengo un valor inicial para `CountContext`. Si quisiera un valor inicial, llamaria_ a `React.createContext({ count: 0 })`. Pero no inclui un valor por defecto y eso es intencional. El `defaultValue` solo es util en una situacion como esta.
+
+```
+function CountDisplay() {
+  const {count} = React.useContext(Countcontext);
+  return <div>{count}</div>;
+}
+
+ReactDom.render(<CountDisplay />, document.getElementById('🔯'));
+```
+
+Porque no tenemos un valor por defecto para  nuestro `CountContext` tenemos un error resaltado en la línea donde desestructuramos el valor a retornar de `useContext`. Esto es porque nuestro valor por defecto es `undefined` y tu no puedes desestructurar `undefined`.
+
+A ninguno de nosotros nos gustan los errores en tiempo de ejecución, así que tu reacción instintiva puede que sea agregar un valor por defecto para evadir el error en tiempo de ejecución. Sin embargo, ¿qué uso puede tener el contexto si éste no tuviera un valor? Sí,' éste solo está usando el valor por defecto que ha sido proporcionado, entonces éste no puede realmente hacer mucho bien. 99% del tiempo en el que vas a estar creando y usando contextos en tu aplicación, quieres que los consumidores de tus contextos (esos usando `useContext`) sean renderizados dentro de un proveedor(provider) que pueda proporcionar un valor útil.
+
+> Nota, Hay situaciones donde el valor por defecto es útil, pero la mayoria del tiempo no son necesariamente útiles.
+
+[La documentación de React](https://reactjs.org/docs/context.html#reactcreatecontext) sugiere que el valor proporcionado por defecto "puede ser util probando componentes en isolacion sin ningun wrapper." Cuando es verdad que permite hacer esto, yo estoy en desacuerdo en que es mejor envolver(wrapping) tus componentes con el contexto necesario. Recuerda que todo el tiempo que haces algo en tus pruebas que no haces en tu aplicacion, tu reduces el tamano de confianza que las pruebas te dan. [Hay razones para hacer esto](https://kentcdodds.com/blog/the-merits-of-mocking), pero no es ninguna de estas.
+
+> Nota: S tu estas usando Flow o TypeScript, no proporcionar un valor por defecto puede ser realmente molesto para las personas que estan usando *`React.useContext`*, pero yo te mostrare como evitar todo ese problema junto mas abajo. √Sigue leyendo!
+
